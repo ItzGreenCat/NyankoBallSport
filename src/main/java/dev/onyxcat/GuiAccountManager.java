@@ -11,9 +11,7 @@ public class GuiAccountManager {
         accountFrame.setSize(600,400);
         addAccount = new JButton("添加账号");
         addAccount.addActionListener((e) -> {
-            LoginWindow.login((entry) -> {
-                System.out.println(String.format("%s %s",entry.getKey(),entry.getValue()));
-            });
+            LoginWindow.login(Main.sessionManager::login);
         });
         accountFrame.add(addAccount, BorderLayout.NORTH);
     }

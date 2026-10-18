@@ -1,5 +1,7 @@
 package dev.onyxcat.network;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.onyxcat.session.Session;
 
 import java.io.*;
@@ -13,8 +15,11 @@ public class NetworkHandler {
     public static final String HOST_URL = "https://run.gxapp.iydsj.com";
     public static final String EXTRA_URL = "https://discovery.gxapp.iydsj.com";
 
-    public void request(EnumRequestMethod method,String api,String request_body,AdditionalHeader additionalHeaders){
+    public JsonNode request(EnumRequestMethod method,String api,String request_body,AdditionalHeader additionalHeaders) throws Exception {
         String url = HOST_URL + api;
+        RequestResult result = encryptedPacket(method,url,request_body,HeaderBuilder.iosUA,additionalHeaders);
+        JsonNode business =  checkBusiness(result.data.getBusiness());
+        return business;
     }
     public RequestResult encryptedPacket(EnumRequestMethod method,String urlStr,String request_body,String ua,AdditionalHeader... additionalHeader) throws IOException {
         int uid = Session.uid;
@@ -36,7 +41,7 @@ public class NetworkHandler {
             conn.setRequestProperty("appVersion", "7.3.40");
             conn.setRequestProperty("headerSign", headerEnvironment.getJson());
 
-            if (additionalHeader != null) {
+            if (!additionalHeader[0].isEmpty()) {
                 for (AdditionalHeader pair : additionalHeader) {
                     conn.setRequestProperty(pair.key, pair.value);
                 }
@@ -85,5 +90,37 @@ public class NetworkHandler {
             }
         }
         return sb.toString();
+    }
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    public JsonNode checkBusiness(String businessStr) throws Exception {
+        // 0. 将传入的 JSON 字符串解析为 JsonNode
+        JsonNode v;
+        try {
+            v = MAPPER.readTree(businessStr);
+        } catch (Exception e) {
+            throw new RuntimeException("业务 JSON 解析失败: " + businessStr, e);
+        }
+
+        // 1. 获取 error 字段，如果不存在或不是数字，默认返回 0
+        long err = v.path("error").asLong(0L);
+
+        // 2. 判断业务状态码是否为 10000
+        if (err == 10000L) {
+            return v; // 返回解析好的 JsonNode 供后续使用（如果你想原样返回 String，这里改写为 return businessStr; 即可）
+        } else {
+            // 3. 依次尝试获取 message 或 msg 字段
+            JsonNode msgNode = v.get("message");
+            if (msgNode == null || msgNode.isNull()) {
+                msgNode = v.get("msg");
+            }
+
+            String msg = (msgNode != null && msgNode.isTextual())
+                    ? msgNode.asText()
+                    : "(无消息)";
+
+            // 4. 抛出异常
+            throw new RuntimeException(String.format("业务错误 %d: %s", err, msg));
+        }
     }
 }

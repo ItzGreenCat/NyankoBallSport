@@ -1,5 +1,7 @@
 package dev.onyxcat;
 
+import dev.onyxcat.session.SessionManager;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -24,6 +26,11 @@ public class GuiMainMenu {
         });
         mainPanel.add(accountManagerButton);
 
+        JButton testLogOut = new JButton("testlogout");
+        testLogOut.addActionListener((e) -> {
+            Main.sessionManager.logout();
+        });
+        mainPanel.add(testLogOut);
         accountManager = new GuiAccountManager();
     }
     public void startupMenu(){

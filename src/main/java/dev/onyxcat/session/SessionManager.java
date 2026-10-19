@@ -148,7 +148,9 @@ public class SessionManager {
             Session.weight = getField(biz, "weight").asDouble(68.0);
             Session.username = username;
             Session.profile = parseDataField(biz);
-
+            if(Session.headerInformation.getAppInstallTime() == 0) {
+                Session.headerInformation.setAppInstallTime(HeaderIdentity.freshInstallTime(Session.headerInformation.getPlatform()));
+            }
             SessionCodec.saveSession("Session-" + username);
             AccountList.accounts.containers.add(new AccountContainer(Session.name,username));
             AccountList.saveAccounts();

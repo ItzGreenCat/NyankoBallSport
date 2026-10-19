@@ -3,28 +3,33 @@ package dev.onyxcat.network;
 import java.io.Serializable;
 
 public class HeaderIdentity implements Serializable, Cloneable {
+    public static final String[] iosVersions = new String[]{"17.5.1", "18.0.1", "18.1", "18.2",};
+    public static final String[] androidVersions = new String[]{"10","11","12", "13", "14","15","16"};
+    public static final String[] androidDevices = new String[]{"HLS-AL00","TET-AN00","ALT-AL10","JAD-AL00","PGP110","PGZ110","PGKM10","PJD110","PMW110","PDSM00","V1821A","V1923A","V1829A","V2046A","V2170A","V2227A","V2405A","V2612A","M1803E1A","M2011K2C","25098PN5AC","NX712J","NX907J"};
     private static final long serialVersionUID = 1L;
     private static final long DAY_MS = 86_400_000L;
-
+    //ios/android
     private String platform = "ios";
-
+    //random uuid
     private String deviceId = "";
+    //empty,ios random uuid
     private String idfa = "";
-
+    //version
     private String osVersion = "17.4.1";
-
-    private String deviceName = "iPhone15,2";
-
+    //机型,ios固定iPhone
+    private String deviceName = "iPhone";
+    //empty
     private String manufacturer = "";
-
-    private double anchorLat = 0.0;
+    //经度
     private double anchorLon = 0.0;
+    //纬度
+    private double anchorLat = 0.0;
 
     private long appInstallTime = 0L;
 
     private String macAddress = "";
 
-    private String city = "";
+    private String city = "哈尔滨";
 
     public HeaderIdentity() {
     }

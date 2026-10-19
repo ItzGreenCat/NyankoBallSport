@@ -2,6 +2,7 @@ package dev.onyxcat.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.onyxcat.AccountArray;
 import dev.onyxcat.AccountContainer;
 import dev.onyxcat.AccountList;
 import dev.onyxcat.Main;
@@ -10,6 +11,7 @@ import dev.onyxcat.network.EnumRequestMethod;
 import dev.onyxcat.network.HeaderIdentity;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -150,6 +152,7 @@ public class SessionManager {
             SessionCodec.saveSession("Session-" + username);
             AccountList.accounts.containers.add(new AccountContainer(Session.name,username));
             AccountList.saveAccounts();
+            Main.mainMenuInstance.accountManager.refreshAccounts();
             System.out.printf("[session] uid=%d token=%s unid=%s name=%s weight=%.1f device=%s%n",
                     Session.uid, mask(Session.token), Session.unid, Session.name, Session.weight, deviceId);
             System.out.printf("[session] profile 字段数=%d%n",
@@ -164,15 +167,13 @@ public class SessionManager {
             try {
                 Main.networkHandler.request(EnumRequestMethod.POST, logoutApi, "{}", AdditionalHeader.EMPTY_HEADER);
             } catch (Exception ignored) {
-                // 忽略登出请求的网络异常
             }
             System.out.printf("[logout] 已请求登出 uid=%d%n", oldUid);
         }
         Session.resetSession();
+        Main.mainMenuInstance.accountManager.refreshAccounts();
         System.out.println("[logout] 本地 Session 已重置");
     }
-
-    // ==================== 内部辅助方法 ====================
 
     private JsonNode getField(JsonNode biz, String key) {
         if (biz.hasNonNull(key)) {
@@ -279,5 +280,23 @@ public class SessionManager {
             server.stop(0);
         }
     }
-
+    public void loadLocalSession(String account){
+        try {
+            SessionCodec.loadSession("Session-" + account);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,"无法加载此账户","提示",JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    public void removeLocalSession(String account){
+        try {
+            AccountContainer container = AccountList.accounts.containers.stream().filter(i -> i.accountName.equals(account)).findFirst().get();
+            AccountList.accounts.containers.remove(container);
+            AccountList.saveAccounts();
+            SessionCodec.removeSession("Session-" + account);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,"无法删除此账户","提示",JOptionPane.WARNING_MESSAGE);
+        }
+    }
 }

@@ -8,21 +8,23 @@ import java.util.function.Consumer;
 public class LoginWindow {
     public static void login(Consumer<Map.Entry<String,String>> consumer){
         JFrame frame = new JFrame("Login");
-        frame.setSize(200,100);
+        frame.setSize(200,180);
         JLabel accountLabel = new JLabel("账号");
         JTextField account = new JTextField();
         JLabel passwdLabel = new JLabel("密码");
         JPasswordField passwd = new JPasswordField();
-        JPanel accountPanel = new JPanel();
+        JPanel accountPanel = new JPanel(new BorderLayout());
         accountPanel.setLayout(new GridLayout(1,2));
-        JPanel passwdPanel = new JPanel();
+        JPanel passwdPanel = new JPanel(new BorderLayout());
         passwdPanel.setLayout(new GridLayout(1,2));
-        accountPanel.add(accountLabel);
+        accountPanel.add(accountLabel,BorderLayout.WEST);
         accountPanel.add(account);
-        passwdPanel.add(passwdLabel);
+        passwdPanel.add(passwdLabel,BorderLayout.WEST);
         passwdPanel.add(passwd);
-        frame.add(accountPanel,BorderLayout.NORTH);
-        frame.add(passwdPanel,BorderLayout.CENTER);
+        JPanel inputPanel = new JPanel();
+        inputPanel.add(accountPanel);
+        inputPanel.add(passwdPanel);
+        frame.add(inputPanel,BorderLayout.CENTER);
         JButton button = new JButton("登录");
         button.addActionListener((e) -> {
             Map.Entry<String,String> entry = new Map.Entry<String, String>() {

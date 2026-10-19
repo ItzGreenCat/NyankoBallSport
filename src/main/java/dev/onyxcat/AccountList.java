@@ -9,12 +9,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class AccountList {
-    public static ArrayList<AccountContainer> accounts = new ArrayList<>();
+    public static AccountArray accounts = new AccountArray();
     private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
     public static void saveAccounts() throws IOException {
         MAPPER.writeValue(new File("accounts.yaml"),accounts);
     }
     public static void loadAccounts() throws IOException {
-        accounts = MAPPER.readValue(new File("accounts.yaml"), new TypeReference<ArrayList<AccountContainer>>(){});
+        File file = new File("accounts.yaml");
+        if(file.exists()) {
+            accounts = MAPPER.readValue(file, AccountArray.class);
+        }
     }
 }

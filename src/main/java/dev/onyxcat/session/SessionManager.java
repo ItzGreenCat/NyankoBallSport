@@ -148,7 +148,7 @@ public class SessionManager {
             Session.profile = parseDataField(biz);
 
             SessionCodec.saveSession("Session-" + username);
-            AccountList.accounts.add(new AccountContainer(Session.name,username));
+            AccountList.accounts.containers.add(new AccountContainer(Session.name,username));
             AccountList.saveAccounts();
             System.out.printf("[session] uid=%d token=%s unid=%s name=%s weight=%.1f device=%s%n",
                     Session.uid, mask(Session.token), Session.unid, Session.name, Session.weight, deviceId);

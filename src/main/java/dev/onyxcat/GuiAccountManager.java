@@ -15,7 +15,7 @@ public class GuiAccountManager {
             LoginWindow.login(Main.sessionManager::login);
         });
         scrollPanel = new JScrollPane();
-        for(AccountContainer container : AccountList.accounts){
+        for(AccountContainer container : AccountList.accounts.containers){
 
         }
         accountFrame.add(addAccount, BorderLayout.NORTH);

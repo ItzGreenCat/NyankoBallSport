@@ -17,6 +17,7 @@ public class Main {
         networkHandler = new NetworkHandler();
         sessionManager = new SessionManager();
         mainMenuInstance = new GuiMainMenu();
+        SessionCodec.loadSession("Session-18731169770");
         mainMenuInstance.startupMenu();
     }
 }

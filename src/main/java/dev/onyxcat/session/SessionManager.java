@@ -2,11 +2,14 @@ package dev.onyxcat.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.onyxcat.AccountContainer;
+import dev.onyxcat.AccountList;
 import dev.onyxcat.Main;
 import dev.onyxcat.network.AdditionalHeader;
 import dev.onyxcat.network.EnumRequestMethod;
 import dev.onyxcat.network.HeaderIdentity;
 
+import javax.swing.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -81,7 +84,6 @@ public class SessionManager {
                             break;
                         }
                     } catch (Exception e) {
-                        // 兼容：如果 networkHandler.request 在遇到 error != 10000 时直接抛出了异常
                         if (e.getMessage() != null && e.getMessage().contains("10003")) {
                             System.out.printf("[geevalidate] 验证失败（%d/3），重试%n", attempt);
                             Thread.sleep(2000);
@@ -94,12 +96,12 @@ public class SessionManager {
                 }
 
                 if (!validated) {
+                    JOptionPane.showMessageDialog(null,"GeeValidate 连续验证失败（10003），请重试!","提示",JOptionPane.WARNING_MESSAGE);
                     throw new RuntimeException("geevalidate 连续验证失败（10003），请重试");
                 }
                 Thread.sleep(2000);
             }
 
-            // 2. 从 Session.headerInformation 获取设备信息
             if (Session.headerInformation == null) {
                 Session.headerInformation = new HeaderIdentity();
             }
@@ -107,7 +109,7 @@ public class SessionManager {
             String deviceId = identity.getDeviceId();
             if (deviceId == null || deviceId.isEmpty()) {
                 deviceId = UUID.randomUUID().toString().toUpperCase();
-                Session.headerInformation.setDeviceId(deviceId); // 同步回全局 Session
+                Session.headerInformation.setDeviceId(deviceId);
             }
 
             String loginBody = MAPPER.writeValueAsString(Map.of(
@@ -122,24 +124,21 @@ public class SessionManager {
                     "osType", "0"
             ));
 
-            // 3. 构造 Basic Authorization 头并发送登录请求
             String credential = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
-            // 【提示】请根据你实际的 AdditionalHeader 构造方式微调下面这行：
             AdditionalHeader authHeader = new AdditionalHeader("Authorization", "Basic " + credential);
 
             JsonNode biz = Main.networkHandler.request(EnumRequestMethod.POST, loginApi, loginBody, authHeader);
 
-            // 4. 解析登录响应字段
             int uid = getField(biz, "uid").asInt(0);
             String token = getField(biz, "token").asText("");
             if (uid < 1 || token.isEmpty()) {
+                JOptionPane.showMessageDialog(null,"登录响应缺 uid/token: " + biz.toString(),"提示",JOptionPane.WARNING_MESSAGE);
                 throw new RuntimeException("登录响应缺 uid/token: " + biz.toString());
             }
 
             JsonNode unidNode = getField(biz, "unid");
             String unid = (unidNode.isTextual() || unidNode.isNumber()) ? unidNode.asText() : "0";
 
-            // 5. 更新全局静态 Session
             Session.uid = uid;
             Session.token = token;
             Session.unid = unid;
@@ -148,18 +147,17 @@ public class SessionManager {
             Session.username = username;
             Session.profile = parseDataField(biz);
 
-            System.err.printf("[session] uid=%d token=%s unid=%s name=%s weight=%.1f device=%s%n",
+            SessionCodec.saveSession("Session-" + username);
+            AccountList.accounts.add(new AccountContainer(Session.name,username));
+            AccountList.saveAccounts();
+            System.out.printf("[session] uid=%d token=%s unid=%s name=%s weight=%.1f device=%s%n",
                     Session.uid, mask(Session.token), Session.unid, Session.name, Session.weight, deviceId);
-            System.err.printf("[session] profile 字段数=%d%n",
+            System.out.printf("[session] profile 字段数=%d%n",
                     Session.profile != null && Session.profile.isObject() ? Session.profile.size() : 0);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
-    /**
-     * 登出并重置 Session
-     */
     public void logout() {
         if (Session.uid > 0 && !Session.token.isEmpty()) {
             int oldUid = Session.uid;
@@ -201,11 +199,9 @@ public class SessionManager {
     private JsonNode solveGt4(String captchaId) throws Exception {
         java.util.concurrent.CompletableFuture<JsonNode> future = new java.util.concurrent.CompletableFuture<>();
 
-        // 1. 创建一个本地随机端口的 HTTP 服务
         com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
         int port = server.getAddress().getPort();
 
-        // 2. 渲染极验 GT4 官方验证码页面
         server.createContext("/", exchange -> {
             String html = String.format(
                     "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>GT4 滑块验证</title>\n" +

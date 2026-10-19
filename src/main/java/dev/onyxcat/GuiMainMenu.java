@@ -1,7 +1,10 @@
 package dev.onyxcat;
 
 import dev.onyxcat.network.HeaderIdentity;
+import dev.onyxcat.processor.PointProcessor;
+import dev.onyxcat.processor.PolicyProcessor;
 import dev.onyxcat.session.Session;
+import dev.onyxcat.session.SessionCodec;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +49,7 @@ public class GuiMainMenu {
     public final JButton autoGenerate;
     public final JButton saveSettings;
     public GuiAccountManager accountManager;
+    public JTextArea informationLabel;
     public GuiMainMenu(){
         mainFrame = new JFrame("NyankoBall");
         mainFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -150,10 +154,25 @@ public class GuiMainMenu {
         autoGenerate = new JButton("自动生成");
         autoGenerate.addActionListener(e -> generateInformation());
         saveSettings = new JButton("保存");
+        saveSettings.addActionListener(e -> saveInformation());
         settingControlPanel.add(autoGenerate);
         settingControlPanel.add(saveSettings);
         settingControlPanel.setMaximumSize(settingControlPanel.getPreferredSize());
         settingsPanel.add(settingControlPanel);
+        informationLabel = new JTextArea();
+        informationLabel.setEditable(false);
+        informationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainFrame.add(informationLabel,BorderLayout.SOUTH);
+
+        JButton getPolicy = new JButton("policy");
+            getPolicy.addActionListener((e) -> {
+                try {
+                    PointProcessor.getPoints();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+        mainFrame.add(getPolicy);
         refreshInformation();
     }
     public void startupMenu(){
@@ -181,10 +200,38 @@ public class GuiMainMenu {
         latField.setText(String.valueOf(Session.headerInformation.getAnchorLat()));
         lonField.setText(String.valueOf(Session.headerInformation.getAnchorLon()));
         cityField.setText(String.valueOf(Session.headerInformation.getCity()));
+        String labelText = String.format("当前环境: 平台[%s] 设备ID[%s] 系统版本[%s] IDFA/IMEI[%s]\n设备型号[%s] MAC地址[%s] 经纬度[%f,%f] 城市[%s]",
+                Session.headerInformation.getPlatform(),
+                Session.headerInformation.getDeviceId(),
+                Session.headerInformation.getOsVersion(),
+                Session.headerInformation.getIdfa(),
+                Session.headerInformation.getDeviceName(),
+                Session.headerInformation.getMacAddress(),
+                Session.headerInformation.getAnchorLon(),
+                Session.headerInformation.getAnchorLat(),
+                Session.headerInformation.getCity());
+        informationLabel.setText(labelText);
     }
     public void generateInformation(){
         deviceIDField.setText(UUID.randomUUID().toString().toUpperCase(Locale.ROOT));
         systemVersionField.setText(iosButton.isSelected() ? HeaderIdentity.iosVersions[random.nextInt(HeaderIdentity.iosVersions.length)] : HeaderIdentity.androidVersions[random.nextInt(HeaderIdentity.androidVersions.length)]);
         deviceNameField.setText(iosButton.isSelected() ? "iPhone" : HeaderIdentity.androidDevices[random.nextInt(HeaderIdentity.androidVersions.length)]);
+    }
+    public void saveInformation(){
+        Session.headerInformation.setPlatform(iosButton.isSelected() ? "ios" : "android");
+        Session.headerInformation.setDeviceId(deviceIDField.getText());
+        Session.headerInformation.setIdfa(iosButton.isSelected() ? UUID.randomUUID().toString().toUpperCase(Locale.ROOT) : "");
+        Session.headerInformation.setOsVersion(systemVersionField.getText());
+        Session.headerInformation.setDeviceName(deviceNameField.getText());
+        Session.headerInformation.setMacAddress(HeaderIdentity.randomMac());
+        Session.headerInformation.setAnchorLat(Double.parseDouble(latField.getText()));
+        Session.headerInformation.setAnchorLon(Double.parseDouble(lonField.getText()));
+        Session.headerInformation.setCity(cityField.getText());
+        try{
+            SessionCodec.saveSession("Session-" + Session.profile.get("username").textValue());
+        } catch (Exception e){
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,"无法保存配置","提示",JOptionPane.WARNING_MESSAGE);
+        }
     }
 }

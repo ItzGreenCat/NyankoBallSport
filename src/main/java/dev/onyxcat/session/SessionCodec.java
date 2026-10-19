@@ -16,11 +16,15 @@ public class SessionCodec {
     public static void saveSession(String fileName) throws IOException {
         SessionWrapper wrapper = new SessionWrapper();
         MAPPER.writeValue(new File(fileName + ".yaml"),wrapper);
+        Main.mainMenuInstance.accountManager.refreshAccounts();
+        Main.mainMenuInstance.refreshLabel();
+        Main.mainMenuInstance.refreshInformation();
     }
     public static void loadSession(String fileName) throws IOException {
         MAPPER.readValue(new File(fileName + ".yaml"),SessionWrapper.class).unwarp();
         Main.mainMenuInstance.accountManager.refreshAccounts();
         Main.mainMenuInstance.refreshLabel();
+        Main.mainMenuInstance.refreshInformation();
     }
     public static void removeSession(String fileName) {
         File file = new File(fileName + ".yaml");
@@ -29,5 +33,6 @@ public class SessionCodec {
         }
         Main.mainMenuInstance.accountManager.refreshAccounts();
         Main.mainMenuInstance.refreshLabel();
+        Main.mainMenuInstance.refreshInformation();
     }
 }

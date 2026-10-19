@@ -1,8 +1,10 @@
 package dev.onyxcat.network;
 
 import java.io.Serializable;
+import java.util.Random;
 
 public class HeaderIdentity implements Serializable, Cloneable {
+    public static final Random random = new Random();
     public static final String[] iosVersions = new String[]{"17.5.1", "18.0.1", "18.1", "18.2",};
     public static final String[] androidVersions = new String[]{"10","11","12", "13", "14","15","16"};
     public static final String[] androidDevices = new String[]{"HLS-AL00","TET-AN00","ALT-AL10","JAD-AL00","PGP110","PGZ110","PGKM10","PJD110","PMW110","PDSM00","V1821A","V1923A","V1829A","V2046A","V2170A","V2227A","V2405A","V2612A","M1803E1A","M2011K2C","25098PN5AC","NX712J","NX907J"};
@@ -21,15 +23,15 @@ public class HeaderIdentity implements Serializable, Cloneable {
     //empty
     private String manufacturer = "";
     //经度
-    private double anchorLon = 0.0;
+    private double anchorLon = 126.57122214407605;
     //纬度
-    private double anchorLat = 0.0;
+    private double anchorLat = 45.85433744798081;
 
     private long appInstallTime = 0L;
 
     private String macAddress = "";
 
-    private String city = "哈尔滨";
+    private String city = "哈尔滨市";
 
     public HeaderIdentity() {
     }
@@ -195,5 +197,16 @@ public class HeaderIdentity implements Serializable, Cloneable {
             return true;
         }
         return this.city.trim().equals(defaultCity);
+    }
+    public static String randomMac() {
+        String[] mac = {
+                String.format("%02x", 0x08),
+                String.format("%02x", 0xa4),
+                String.format("%02x", 0x00),
+                String.format("%02x", random.nextInt(256)),
+                String.format("%02x", random.nextInt(256)),
+                String.format("%02x", random.nextInt(256))
+        };
+        return String.join(":", mac);
     }
 }

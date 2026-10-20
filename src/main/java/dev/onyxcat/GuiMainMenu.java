@@ -1,16 +1,25 @@
 package dev.onyxcat;
 
+import dev.onyxcat.network.EnvelopeCrypto;
 import dev.onyxcat.network.HeaderIdentity;
 import dev.onyxcat.processor.PointProcessor;
 import dev.onyxcat.processor.PolicyProcessor;
+import dev.onyxcat.processor.RunningArguments;
+import dev.onyxcat.processor.RunningProcessor;
 import dev.onyxcat.session.Session;
 import dev.onyxcat.session.SessionCodec;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GuiMainMenu {
     public final Random random = new Random();
@@ -48,6 +57,28 @@ public class GuiMainMenu {
     public final JPanel settingControlPanel;
     public final JButton autoGenerate;
     public final JButton saveSettings;
+    public final JPanel distancePanel;
+    public final JLabel distanceLabel1;
+    public final JLabel distanceLabel2;
+    public final JTextField distanceMin;
+    public final JTextField distanceMax;
+    public final JPanel speedPanel;
+    public final JTextField speedFieldMin;
+    public final JTextField speedFieldMax;
+    public final JLabel speedLabel;
+    public final JPanel faceCheckPanel;
+    public final JLabel faceCheckLabel;
+    public final JCheckBox faceCheckBox;
+    public final JLabel currentRunningInfo;
+    public final JButton refreshInfoButton;
+    public JPanel mainMenuControlPanel;
+    public JButton submit;
+
+    public int currentMile = 0;
+    public int currentSpeed = 0;
+    public Date currentStartDate;
+    public int faceCheck;
+
     public GuiAccountManager accountManager;
     public JTextArea informationLabel;
     public GuiMainMenu(){
@@ -68,6 +99,7 @@ public class GuiMainMenu {
         accountManager = new GuiAccountManager();
         switchPanel = new JPanel(new CardLayout());
         homePanel = new JPanel();
+        homePanel.setLayout(new BoxLayout(homePanel,BoxLayout.Y_AXIS));
         homePanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
         homePanel.setLayout(new BoxLayout(homePanel,BoxLayout.Y_AXIS));
         settingsPanel = new JPanel();
@@ -163,16 +195,60 @@ public class GuiMainMenu {
         informationLabel.setEditable(false);
         informationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         mainFrame.add(informationLabel,BorderLayout.SOUTH);
+        distancePanel = new JPanel();
+        distancePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        distanceLabel1 = new JLabel("距离(km) 最小值:");
+        distancePanel.add(distanceLabel1);
+        distanceMin = new JTextField();
+        distancePanel.add(distanceMin);
+        distanceLabel2 = new JLabel("最大值:");
+        distancePanel.add(distanceLabel2);
+        distanceMax = new JTextField();
+        distancePanel.add(distanceMax);
+        distancePanel.setMaximumSize(distancePanel.getPreferredSize());
+        homePanel.add(distancePanel);
+        speedPanel = new JPanel();
+        speedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        speedLabel = new JLabel("速度范围(秒/KM)[最小/最大]");
+        speedFieldMin = new JTextField("360");
+        speedFieldMax = new JTextField("480");
+        speedPanel.add(speedLabel);
+        speedPanel.add(speedFieldMin);
+        speedPanel.add(speedFieldMax);
+        speedPanel.setMaximumSize(speedPanel.getPreferredSize());
+        homePanel.add(speedPanel);
+        faceCheckPanel = new JPanel();
+        faceCheckPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        faceCheckLabel = new JLabel("人脸验证");
+        faceCheckPanel.add(faceCheckLabel);
+        faceCheckBox = new JCheckBox();
+        faceCheckBox.setSelected(true);
+        faceCheckPanel.add(faceCheckBox);
+        faceCheckPanel.setMaximumSize(faceCheckPanel.getPreferredSize());
+        homePanel.add(faceCheckPanel);
+        currentRunningInfo = new JLabel();
+        currentRunningInfo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        homePanel.add(currentRunningInfo);
+        updateRunningInfo();
+        refreshInfoButton = new JButton("刷新方案");
+        refreshInfoButton.addActionListener((e) -> updateRunningInfo());
+        mainMenuControlPanel = new JPanel();
+        mainMenuControlPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainMenuControlPanel.add(refreshInfoButton);
+        submit = new JButton("提交跑步数据");
+        mainMenuControlPanel.add(submit);
+        mainMenuControlPanel.setMaximumSize(mainMenuControlPanel.getPreferredSize());
+        homePanel.add(mainMenuControlPanel);
 
         JButton getPolicy = new JButton("policy");
             getPolicy.addActionListener((e) -> {
                 try {
-                    PointProcessor.getPoints();
+                    RunningProcessor.processRun(new RunningArguments(currentMile,(long)(currentSpeed * ((double)currentMile) / 1000d),currentStartDate.getTime(),faceCheck,BigInteger.valueOf(EnvelopeCrypto.nowMs() % 2147483647)));
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }
             });
-        mainFrame.add(getPolicy);
+        mainPanel.add(getPolicy);
         refreshInformation();
     }
     public void startupMenu(){
@@ -184,6 +260,21 @@ public class GuiMainMenu {
         } else {
             accountLabel.setText("未登入");
         }
+    }
+    public void updateRunningInfo(){
+        try{
+            int randomDistance = Integer.parseInt(distanceMin.getText()) + random.nextInt(Integer.parseInt(distanceMax.getText()) - Integer.parseInt(distanceMin.getText()));
+            int randomSpeed = Integer.parseInt(speedFieldMin.getText()) + random.nextInt(Integer.parseInt(speedFieldMax.getText()) - Integer.parseInt(speedFieldMin.getText()));
+            currentMile = randomDistance;
+            currentSpeed = randomSpeed;
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        currentStartDate = randomDateToday();
+        faceCheck = faceCheckBox.isSelected() ? 1 : 0;
+        int time = (int)(currentSpeed * ((double)currentMile) / 1000f);
+        String text = "本次方案 -> 距离:" + currentMile + "米 速度" + currentSpeed + " s/km 用时:[" + (time - (time % 60)) / 60 + ":" + time % 60 + "] 开始时间:" + currentStartDate.toString();
+        currentRunningInfo.setText(text);
     }
     public void refreshInformation(){
         iosButton.setSelected(false);
@@ -233,5 +324,19 @@ public class GuiMainMenu {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null,"无法保存配置","提示",JOptionPane.WARNING_MESSAGE);
         }
+    }
+    public static Date randomDateToday() {
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+
+        ZonedDateTime start = today.atTime(7, 0).atZone(zone);
+        ZonedDateTime end = today.atTime(20, 0).atZone(zone);
+
+        long randomMillis = ThreadLocalRandom.current().nextLong(
+                start.toInstant().toEpochMilli(),
+                end.toInstant().toEpochMilli()
+        );
+
+        return new Date(randomMillis);
     }
 }

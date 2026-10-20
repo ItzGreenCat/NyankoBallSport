@@ -41,7 +41,6 @@ public class PointProcessor {
         RequestResult result = Main.networkHandler.encryptedPacket(EnumRequestMethod.POST,url,body,HeaderBuilder.iosUA,AdditionalHeader.EMPTY_HEADER);
         JsonNode jsonPoints = MAPPER.readTree(result.data.getBusiness().getBytes()).findPath("data").findPath("pointsResModels");
         List<Point> points;
-        System.out.println("你好");
         System.out.println(result.data.getBusiness());
         points = MAPPER.readValue(jsonPoints.toString().getBytes(), new TypeReference<ArrayList<Point>>(){});
         for(Point point : points){

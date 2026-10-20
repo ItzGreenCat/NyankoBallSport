@@ -41,12 +41,13 @@ public class PolicyProcessor {
            throw new RuntimeException();
         }
         long timestamp = result.findPath("data").get("timestamp").longValue();
+        System.out.println(result);
         System.out.println("TimeStamp:" + timestamp);
         long policy = result.findPath("data").get("policy").longValue();
         System.out.println(policy);
         JsonNode runRuleMode = result.findPath("data").findPath("runRuleModel");
-        String startTime = runRuleMode.get("validTime").get("start").textValue();
-        String endTime = runRuleMode.get("validTime").get("end").textValue();
+        String startTime = runRuleMode.get("validTime").get(0).get("start").textValue();
+        String endTime = runRuleMode.get("validTime").get(0).get("end").textValue();
         System.out.println(result.toPrettyString());
         return new PolicyArgument(timestamp, policy, runRuleMode.get("minDistance").longValue(), new Map.Entry<String, String>() {
             @Override

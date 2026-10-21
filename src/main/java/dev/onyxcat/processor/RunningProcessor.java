@@ -1,5 +1,6 @@
 package dev.onyxcat.processor;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -283,6 +284,17 @@ public class RunningProcessor {
 
                     if (outcome.detail != null) {
                         System.out.println("[runningProcessor] 记录详情：" + outcome.detail);
+                        JsonNode finalResult = outcome.detail;
+                        StringBuilder sb = new StringBuilder();
+                        String statusInfo = finalResult.get("statusInfo").textValue();
+                        sb.append(statusInfo).append("\n");
+                        sb.append("\n");
+                        JsonNode reasonList = finalResult.findPath("reasonList");
+                        ArrayList<Reasons> reasons = MAPPER.readValue(reasonList.traverse(),new TypeReference<ArrayList<Reasons>>(){});
+                        for(Reasons reason : reasons){
+                            sb.append(reason.complete ? "完成" : "未达标").append(": ").append(reason.reason).append("\n");
+                        }
+                        JOptionPane.showMessageDialog(null,sb.toString());
                     }
                 }
 

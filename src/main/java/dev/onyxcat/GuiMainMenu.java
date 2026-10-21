@@ -239,16 +239,13 @@ public class GuiMainMenu {
         mainMenuControlPanel.add(submit);
         mainMenuControlPanel.setMaximumSize(mainMenuControlPanel.getPreferredSize());
         homePanel.add(mainMenuControlPanel);
-
-        JButton getPolicy = new JButton("policy");
-            getPolicy.addActionListener((e) -> {
-                try {
-                    RunningProcessor.processRun(new RunningArguments(currentMile,(long)(currentSpeed * ((double)currentMile) / 1000d),currentStartDate.getTime(),faceCheck,BigInteger.valueOf(EnvelopeCrypto.nowMs() % 2147483647)));
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
-        mainPanel.add(getPolicy);
+        submit.addActionListener((e) -> {
+            try {
+                RunningProcessor.processRun(new RunningArguments(currentMile,(long)(currentSpeed * ((double)currentMile) / 1000d),currentStartDate.getTime(),faceCheck,BigInteger.valueOf(EnvelopeCrypto.nowMs() % 2147483647)));
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         refreshInformation();
     }
     public void startupMenu(){

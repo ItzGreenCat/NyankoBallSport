@@ -2,7 +2,6 @@ package dev.onyxcat;
 
 
 import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import dev.onyxcat.network.NetworkHandler;
 import dev.onyxcat.session.SessionManager;
 
